@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "whatsapp": {
+      "command": "node",
+      "args": [
+        "src/main.ts"
+      ],
+      "timeout": 15,
+      "alwaysAllow": [],
+      "disabled": false
+    }
+  }
+}

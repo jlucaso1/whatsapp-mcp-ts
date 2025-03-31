@@ -1,0 +1,31 @@
+{
+  "name": "whatsapp-mcp-ts",
+  "version": "1.0.0",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/main.js",
+    "dev": "ts-node src/main.ts",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.8.0",
+    "@whiskeysockets/baileys": "^6.17.16",
+    "node-cache": "^5.1.2",
+    "pino": "^9.6.0",
+    "zod": "^3.24.2"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.14",
+    "@types/pino": "^7.0.4",
+    "typescript": "^5.8.2"
+  },
+  "engines": {
+    "node": ">=23.10.0"
+  }
+}
