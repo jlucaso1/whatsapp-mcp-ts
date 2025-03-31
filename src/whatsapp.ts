@@ -10,8 +10,8 @@ import {
   jidNormalizedUser,
 } from "@whiskeysockets/baileys";
 import P from "pino";
-import NodeCache from "node-cache";
 import path from "node:path";
+import open from "open";
 
 import {
   initializeDatabase,
@@ -21,8 +21,6 @@ import {
 } from "./database.ts";
 
 const AUTH_DIR = path.join(import.meta.dirname, "..", "auth_info");
-
-const msgRetryCounterCache = new NodeCache();
 
 export type WhatsAppSocket = ReturnType<typeof makeWASocket>;
 
@@ -107,7 +105,6 @@ export async function startWhatsAppConnection(
       creds: state.creds,
       keys: makeCacheableSignalKeyStore(state.keys, logger),
     },
-    msgRetryCounterCache,
     generateHighQualityLinkPreview: true,
     shouldIgnoreJid: (jid) => isJidGroup(jid),
   });
@@ -122,6 +119,8 @@ export async function startWhatsAppConnection(
           { qrCodeData: qr },
           "QR Code Received. Copy the qrCodeData string and use a QR code generator (e.g., online website) to display and scan it with your WhatsApp app."
         );
+        // for now we roughly open the QR code in a browser
+        await open(`https://quickchart.io/qr?text=${encodeURIComponent(qr)}`);
       }
 
       if (connection === "close") {
@@ -142,7 +141,8 @@ export async function startWhatsAppConnection(
           process.exit(1);
         }
       } else if (connection === "open") {
-        logger.info(`Connection opened. WA user: ${sock.user?.id}`);
+        logger.info(`Connection opened. WA user: ${sock.user?.name}`);
+        console.log("Logged as", sock.user?.name);
       }
     }
 

@@ -24,8 +24,6 @@ export type Message = {
   chat_name?: string | null;
 };
 
-const ACCENT_REMOVER_UDF = "remove_accents_js";
-
 let dbInstance: DatabaseSync | null = null;
 
 function getDb(): DatabaseSync {
