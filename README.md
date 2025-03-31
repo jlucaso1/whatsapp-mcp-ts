@@ -190,6 +190,9 @@ This application is a single Node.js process that:
 
 For further MCP integration issues, refer to the [official MCP documentation](https://modelcontextprotocol.io/quickstart/server#claude-for-desktop-integration-issues).
 
+## Credits
+- https://github.com/lharries/whatsapp-mcp Do the same as this codebase but uses go and python.
+
 ## License
 
 This project is licensed under the ISC License (see `package.json`).
