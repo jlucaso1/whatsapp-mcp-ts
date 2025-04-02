@@ -63,16 +63,16 @@ export function initializeDatabase(): DatabaseSync {
     `);
 
   db.exec(
-    `CREATE INDEX IF NOT EXISTS idx_messages_timestamp ON messages (timestamp);`
+    `CREATE INDEX IF NOT EXISTS idx_messages_timestamp ON messages (timestamp);`,
   );
   db.exec(
-    `CREATE INDEX IF NOT EXISTS idx_messages_chat_jid ON messages (chat_jid);`
+    `CREATE INDEX IF NOT EXISTS idx_messages_chat_jid ON messages (chat_jid);`,
   );
   db.exec(
-    `CREATE INDEX IF NOT EXISTS idx_messages_sender ON messages (sender);`
+    `CREATE INDEX IF NOT EXISTS idx_messages_sender ON messages (sender);`,
   );
   db.exec(
-    `CREATE INDEX IF NOT EXISTS idx_chats_last_message_time ON chats (last_message_time);`
+    `CREATE INDEX IF NOT EXISTS idx_chats_last_message_time ON chats (last_message_time);`,
   );
 
   return db;
@@ -95,8 +95,8 @@ export function storeChat(chat: Partial<Chat> & { jid: string }): void {
         chat.last_message_time instanceof Date
           ? chat.last_message_time.toISOString()
           : chat.last_message_time === null
-          ? null
-          : String(chat.last_message_time),
+            ? null
+            : String(chat.last_message_time),
     });
   } catch (error) {
     console.error("Error storing chat:", error);
@@ -173,7 +173,7 @@ function rowToChat(row: any): Chat {
 export function getMessages(
   chatJid: string,
   limit: number = 20,
-  page: number = 0
+  page: number = 0,
 ): Message[] {
   const db = getDb();
   try {
@@ -200,7 +200,7 @@ export function getChats(
   page: number = 0,
   sortBy: "last_active" | "name" = "last_active",
   query?: string | null,
-  includeLastMessage: boolean = true
+  includeLastMessage: boolean = true,
 ): Chat[] {
   const db = getDb();
   try {
@@ -249,7 +249,7 @@ export function getChats(
 
 export function getChat(
   jid: string,
-  includeLastMessage: boolean = true
+  includeLastMessage: boolean = true,
 ): Chat | null {
   const db = getDb();
   try {
@@ -283,7 +283,7 @@ export function getChat(
 export function getMessagesAround(
   messageId: string,
   before: number = 5,
-  after: number = 5
+  after: number = 5,
 ): { before: Message[]; target: Message | null; after: Message[] } {
   const db = getDb();
   const result: {
@@ -319,7 +319,7 @@ export function getMessagesAround(
     const beforeRows = beforeStmt.all(
       chatJid,
       targetTimestamp,
-      before
+      before,
     ) as any[];
     result.before = beforeRows.map(rowToMessage).reverse();
 
@@ -343,7 +343,7 @@ export function getMessagesAround(
 
 export function searchDbForContacts(
   query: string,
-  limit: number = 20
+  limit: number = 20,
 ): Pick<Chat, "jid" | "name">[] {
   const db = getDb();
   try {
@@ -363,6 +363,44 @@ export function searchDbForContacts(
     return rows.map((row) => ({ jid: row.jid, name: row.name ?? null }));
   } catch (error) {
     console.error("Error searching contacts:", error);
+    return [];
+  }
+}
+
+export function searchMessages(
+  searchQuery: string,
+  chatJid?: string | null, 
+  limit: number = 10,
+  page: number = 0,
+): Message[] {
+  const db = getDb();
+  try {
+    const offset = page * limit;
+    const searchPattern = `%${searchQuery}%`;
+    let sql = `
+            SELECT m.*, c.name as chat_name
+            FROM messages m
+            JOIN chats c ON m.chat_jid = c.jid
+            WHERE LOWER(m.content) LIKE LOWER(?) -- Param 1: searchPattern
+        `;
+    const params: (string | number | null)[] = [searchPattern];
+
+    if (chatJid) {
+      sql += ` AND m.chat_jid = ?`; 
+      params.push(chatJid);
+    }
+
+    sql += ` ORDER BY m.timestamp DESC`;
+    sql += ` LIMIT ?`;
+    params.push(limit);
+    sql += ` OFFSET ?`; 
+    params.push(offset);
+
+    const stmt = db.prepare(sql);
+    const rows = stmt.all(...params) as any[]; 
+    return rows.map(rowToMessage);
+  } catch (error) {
+    console.error("Error searching messages:", error);
     return [];
   }
 }

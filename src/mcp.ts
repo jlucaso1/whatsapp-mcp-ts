@@ -11,6 +11,7 @@ import {
   getChat,
   getMessagesAround,
   searchDbForContacts,
+  searchMessages,
 } from "./database.ts";
 
 import { sendWhatsAppMessage, type WhatsAppSocket } from "./whatsapp.ts";
@@ -25,8 +26,8 @@ function formatDbMessageForJson(msg: DbMessage) {
     sender_display: msg.sender
       ? msg.sender.split("@")[0]
       : msg.is_from_me
-      ? "Me"
-      : "Unknown",
+        ? "Me"
+        : "Unknown",
     content: msg.content,
     timestamp: msg.timestamp.toISOString(),
     is_from_me: msg.is_from_me,
@@ -44,8 +45,8 @@ function formatDbChatForJson(chat: DbChat) {
     last_sender_display: chat.last_sender
       ? chat.last_sender.split("@")[0]
       : chat.last_is_from_me
-      ? "Me"
-      : null,
+        ? "Me"
+        : null,
     last_is_from_me: chat.last_is_from_me ?? null,
   };
 }
@@ -53,7 +54,7 @@ function formatDbChatForJson(chat: DbChat) {
 export async function startMcpServer(
   sock: WhatsAppSocket | null,
   mcpLogger: P.Logger,
-  waLogger: P.Logger
+  waLogger: P.Logger,
 ): Promise<void> {
   mcpLogger.info("Initializing MCP server...");
 
@@ -76,7 +77,7 @@ export async function startMcpServer(
     },
     async ({ query }) => {
       mcpLogger.info(
-        `[MCP Tool] Executing search_contacts with query: "${query}"`
+        `[MCP Tool] Executing search_contacts with query: "${query}"`,
       );
       try {
         const contacts = searchDbForContacts(query, 20);
@@ -94,7 +95,7 @@ export async function startMcpServer(
         };
       } catch (error: any) {
         mcpLogger.error(
-          `[MCP Tool Error] search_contacts failed: ${error.message}`
+          `[MCP Tool Error] search_contacts failed: ${error.message}`,
         );
         return {
           isError: true,
@@ -106,7 +107,7 @@ export async function startMcpServer(
           ],
         };
       }
-    }
+    },
   );
 
   server.tool(
@@ -115,7 +116,7 @@ export async function startMcpServer(
       chat_jid: z
         .string()
         .describe(
-          "The JID of the chat (e.g., '123456@s.whatsapp.net' or 'group@g.us')"
+          "The JID of the chat (e.g., '123456@s.whatsapp.net' or 'group@g.us')",
         ),
       limit: z
         .number()
@@ -134,7 +135,7 @@ export async function startMcpServer(
     },
     async ({ chat_jid, limit, page }) => {
       mcpLogger.info(
-        `[MCP Tool] Executing list_messages for chat ${chat_jid}, limit=${limit}, page=${page}`
+        `[MCP Tool] Executing list_messages for chat ${chat_jid}, limit=${limit}, page=${page}`,
       );
       try {
         const messages = getMessages(chat_jid, limit, page);
@@ -165,7 +166,7 @@ export async function startMcpServer(
         };
       } catch (error: any) {
         mcpLogger.error(
-          `[MCP Tool Error] list_messages failed for ${chat_jid}: ${error.message}`
+          `[MCP Tool Error] list_messages failed for ${chat_jid}: ${error.message}`,
         );
         return {
           isError: true,
@@ -177,7 +178,7 @@ export async function startMcpServer(
           ],
         };
       }
-    }
+    },
   );
 
   server.tool(
@@ -214,7 +215,7 @@ export async function startMcpServer(
     },
     async ({ limit, page, sort_by, query, include_last_message }) => {
       mcpLogger.info(
-        `[MCP Tool] Executing list_chats: limit=${limit}, page=${page}, sort=${sort_by}, query=${query}, lastMsg=${include_last_message}`
+        `[MCP Tool] Executing list_chats: limit=${limit}, page=${page}, sort=${sort_by}, query=${query}, lastMsg=${include_last_message}`,
       );
       try {
         const chats = getChats(
@@ -222,7 +223,7 @@ export async function startMcpServer(
           page,
           sort_by,
           query ?? null,
-          include_last_message
+          include_last_message,
         );
         if (!chats.length && page === 0) {
           return {
@@ -263,7 +264,7 @@ export async function startMcpServer(
           ],
         };
       }
-    }
+    },
   );
 
   server.tool(
@@ -278,7 +279,7 @@ export async function startMcpServer(
     },
     async ({ chat_jid, include_last_message }) => {
       mcpLogger.info(
-        `[MCP Tool] Executing get_chat for ${chat_jid}, lastMsg=${include_last_message}`
+        `[MCP Tool] Executing get_chat for ${chat_jid}, lastMsg=${include_last_message}`,
       );
       try {
         const chat = getChat(chat_jid, include_last_message);
@@ -301,7 +302,7 @@ export async function startMcpServer(
         };
       } catch (error: any) {
         mcpLogger.error(
-          `[MCP Tool Error] get_chat failed for ${chat_jid}: ${error.message}`
+          `[MCP Tool Error] get_chat failed for ${chat_jid}: ${error.message}`,
         );
         return {
           isError: true,
@@ -313,7 +314,7 @@ export async function startMcpServer(
           ],
         };
       }
-    }
+    },
   );
 
   server.tool(
@@ -339,7 +340,7 @@ export async function startMcpServer(
     },
     async ({ message_id, before, after }) => {
       mcpLogger.info(
-        `[MCP Tool] Executing get_message_context for msg ${message_id}, before=${before}, after=${after}`
+        `[MCP Tool] Executing get_message_context for msg ${message_id}, before=${before}, after=${after}`,
       );
       try {
         const context = getMessagesAround(message_id, before, after);
@@ -369,7 +370,7 @@ export async function startMcpServer(
         };
       } catch (error: any) {
         mcpLogger.error(
-          `[MCP Tool Error] get_message_context failed for ${message_id}: ${error.message}`
+          `[MCP Tool Error] get_message_context failed for ${message_id}: ${error.message}`,
         );
         return {
           isError: true,
@@ -381,7 +382,7 @@ export async function startMcpServer(
           ],
         };
       }
-    }
+    },
   );
 
   server.tool(
@@ -390,7 +391,7 @@ export async function startMcpServer(
       recipient: z
         .string()
         .describe(
-          "Recipient JID (user or group, e.g., '12345@s.whatsapp.net' or 'group123@g.us')"
+          "Recipient JID (user or group, e.g., '12345@s.whatsapp.net' or 'group123@g.us')",
         ),
       message: z.string().min(1).describe("The text message to send"),
     },
@@ -398,7 +399,7 @@ export async function startMcpServer(
       mcpLogger.info(`[MCP Tool] Executing send_message to ${recipient}`);
       if (!sock) {
         mcpLogger.error(
-          "[MCP Tool Error] send_message failed: WhatsApp socket is not available."
+          "[MCP Tool Error] send_message failed: WhatsApp socket is not available.",
         );
         return {
           isError: true,
@@ -416,7 +417,7 @@ export async function startMcpServer(
         }
       } catch (normError: any) {
         mcpLogger.error(
-          `[MCP Tool Error] Invalid recipient JID format: ${recipient}. Error: ${normError.message}`
+          `[MCP Tool Error] Invalid recipient JID format: ${recipient}. Error: ${normError.message}`,
         );
         return {
           isError: true,
@@ -434,7 +435,7 @@ export async function startMcpServer(
           waLogger,
           sock,
           normalizedRecipient,
-          message
+          message,
         );
 
         if (result && result.key && result.key.id) {
@@ -459,7 +460,7 @@ export async function startMcpServer(
         }
       } catch (error: any) {
         mcpLogger.error(
-          `[MCP Tool Error] send_message failed for ${recipient}: ${error.message}`
+          `[MCP Tool Error] send_message failed for ${recipient}: ${error.message}`,
         );
         return {
           isError: true,
@@ -468,7 +469,89 @@ export async function startMcpServer(
           ],
         };
       }
-    }
+    },
+  );
+
+  server.tool(
+    "search_messages",
+    {
+      query: z
+        .string()
+        .min(1)
+        .describe("The text content to search for within messages"),
+      chat_jid: z
+        .string()
+        .optional()
+        .describe(
+          "Optional: The JID of a specific chat to search within (e.g., '123...net' or 'group@g.us'). If omitted, searches all chats.",
+        ),
+      limit: z
+        .number()
+        .int()
+        .positive()
+        .optional()
+        .default(10)
+        .describe("Max messages per page (default 10)"),
+      page: z
+        .number()
+        .int()
+        .nonnegative()
+        .optional()
+        .default(0)
+        .describe("Page number (0-indexed, default 0)"),
+    },
+    async ({ chat_jid, query, limit, page }) => {
+      const searchScope = chat_jid ? `in chat ${chat_jid}` : "across all chats";
+      mcpLogger.info(
+        `[MCP Tool] Executing search_messages ${searchScope}, query="${query}", limit=${limit}, page=${page}`,
+      );
+      try {
+        const messages = searchMessages(query, chat_jid, limit, page);
+
+        if (!messages.length && page === 0) {
+          return {
+            content: [
+              {
+                type: "text",
+                text: `No messages found containing "${query}" in chat ${chat_jid}.`,
+              },
+            ],
+          };
+        } else if (!messages.length) {
+          return {
+            content: [
+              {
+                type: "text",
+                text: `No more messages found containing "${query}" on page ${page} for chat ${chat_jid}.`,
+              },
+            ],
+          };
+        }
+
+        const formattedMessages = messages.map(formatDbMessageForJson);
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(formattedMessages, null, 2),
+            },
+          ],
+        };
+      } catch (error: any) {
+        mcpLogger.error(
+          `[MCP Tool Error] search_messages_in_chat failed for ${chat_jid} / "${query}": ${error.message}`,
+        );
+        return {
+          isError: true,
+          content: [
+            {
+              type: "text",
+              text: `Error searching messages in chat ${chat_jid}: ${error.message}`,
+            },
+          ],
+        };
+      }
+    },
   );
 
   server.resource("db_schema", "schema://whatsapp/main", async (uri) => {
@@ -493,17 +576,17 @@ TABLE messages (id TEXT, chat_jid TEXT, sender TEXT, content TEXT, timestamp TIM
   try {
     await server.connect(transport);
     mcpLogger.info(
-      "MCP transport connected. Server is ready and listening via stdio."
+      "MCP transport connected. Server is ready and listening via stdio.",
     );
   } catch (error: any) {
     mcpLogger.error(
       `[FATAL] Failed to connect MCP transport: ${error.message}`,
-      error
+      error,
     );
     process.exit(1);
   }
 
   mcpLogger.info(
-    "MCP Server setup complete. Waiting for requests from client..."
+    "MCP Server setup complete. Waiting for requests from client...",
   );
 }
