@@ -1,4 +1,5 @@
 # WhatsApp MCP Server (TypeScript/Baileys)
+[![smithery badge](https://smithery.ai/badge/@jlucaso1/whatsapp-mcp-ts)](https://smithery.ai/server/@jlucaso1/whatsapp-mcp-ts)
 
 This is a Model Context Protocol (MCP) server for WhatsApp, built with TypeScript and using the `@whiskeysockets/baileys` library.
 
@@ -73,6 +74,14 @@ The server exposes the following tools to the connected AI agent:
 * `send_message`: Send a text message to a specified recipient JID (user or group).
 
 ## Installation
+
+### Installing via Smithery
+
+To install WhatsApp MCP Server for Claude Desktop automatically via [Smithery](https://smithery.ai/server/@jlucaso1/whatsapp-mcp-ts):
+
+```bash
+npx -y @smithery/cli install @jlucaso1/whatsapp-mcp-ts --client claude
+```
 
 ### Prerequisites
 
