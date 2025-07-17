@@ -1,3 +1,5 @@
+[![MseeP.ai Security Assessment Badge](https://mseep.net/pr/jlucaso1-whatsapp-mcp-ts-badge.png)](https://mseep.ai/app/jlucaso1-whatsapp-mcp-ts)
+
 # WhatsApp MCP Server (TypeScript/Baileys)
 [![smithery badge](https://smithery.ai/badge/@jlucaso1/whatsapp-mcp-ts)](https://smithery.ai/server/@jlucaso1/whatsapp-mcp-ts)
 
