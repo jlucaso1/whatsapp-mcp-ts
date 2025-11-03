@@ -13,6 +13,10 @@ It allows you to connect your personal WhatsApp account to an AI agent (like Ant
 
 It connects directly to your **personal WhatsApp account** using the WhatsApp Web multi-device API. All your messages and authentication details are stored **locally** in a SQLite database (`./data/`) and authentication cache (`./auth_info/`). Data is only sent to the connected AI agent when it explicitly uses the provided MCP tools (which you control via the agent's interface).
 
+<a href="https://glama.ai/mcp/servers/@jlucaso1/whatsapp-mcp-ts">
+  <img width="380" height="200" src="https://glama.ai/mcp/servers/@jlucaso1/whatsapp-mcp-ts/badge" alt="WhatsApp Server MCP server" />
+</a>
+
 *(Optional: Consider adding a screenshot or GIF similar to the reference example here)*
 
 ## Example
