@@ -387,7 +387,7 @@ export function searchDbForContacts(
 
 export function searchMessages(
   searchQuery: string,
-  chatJid?: string | null, 
+  chatJid?: string | null,
   limit: number = 10,
   page: number = 0,
 ): Message[] {
@@ -396,26 +396,27 @@ export function searchMessages(
     const offset = page * limit;
     const searchPattern = `%${searchQuery}%`;
     let sql = `
-            SELECT m.*, c.name as chat_name
+            SELECT m.*, COALESCE(c.name, ct.name, ct.notify, ct.phone_number) as chat_name
             FROM messages m
             JOIN chats c ON m.chat_jid = c.jid
+            LEFT JOIN contacts ct ON c.jid = ct.jid
             WHERE LOWER(m.content) LIKE LOWER(?) -- Param 1: searchPattern
         `;
     const params: (string | number | null)[] = [searchPattern];
 
     if (chatJid) {
-      sql += ` AND m.chat_jid = ?`; 
+      sql += ` AND m.chat_jid = ?`;
       params.push(chatJid);
     }
 
     sql += ` ORDER BY m.timestamp DESC`;
     sql += ` LIMIT ?`;
     params.push(limit);
-    sql += ` OFFSET ?`; 
+    sql += ` OFFSET ?`;
     params.push(offset);
 
     const stmt = db.prepare(sql);
-    const rows = stmt.all(...params) as any[]; 
+    const rows = stmt.all(...params) as any[];
     return rows.map(rowToMessage);
   } catch (error) {
     console.error("Error searching messages:", error);
