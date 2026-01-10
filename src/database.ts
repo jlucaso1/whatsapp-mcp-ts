@@ -217,7 +217,7 @@ export function getChats(
     let sql = `
             SELECT
                 c.jid,
-                c.name,
+                COALESCE(c.name, ct.name, ct.notify, ct.phone_number) as name,
                 c.last_message_time
                 ${
                   includeLastMessage
@@ -229,19 +229,20 @@ export function getChats(
                     : ""
                 }
             FROM chats c
+            LEFT JOIN contacts ct ON c.jid = ct.jid
         `;
 
     const params: (string | number)[] = [];
 
     if (query) {
-      sql += ` WHERE (LOWER(c.name) LIKE LOWER(?) OR c.jid LIKE ?)`;
+      sql += ` WHERE (LOWER(COALESCE(c.name, ct.name, ct.notify, ct.phone_number)) LIKE LOWER(?) OR c.jid LIKE ?)`;
       params.push(`%${query}%`, `%${query}%`);
     }
 
     const orderByClause =
       sortBy === "last_active"
         ? "c.last_message_time DESC NULLS LAST"
-        : "c.name ASC";
+        : "COALESCE(c.name, ct.name, ct.notify, ct.phone_number) ASC";
     sql += ` ORDER BY ${orderByClause}, c.jid ASC`;
 
     sql += ` LIMIT ? OFFSET ?`;
@@ -265,7 +266,7 @@ export function getChat(
     let sql = `
             SELECT
                 c.jid,
-                c.name,
+                COALESCE(c.name, ct.name, ct.notify, ct.phone_number) as name,
                 c.last_message_time
                 ${
                   includeLastMessage
@@ -277,6 +278,7 @@ export function getChat(
                     : ""
                 }
             FROM chats c
+            LEFT JOIN contacts ct ON c.jid = ct.jid
             WHERE c.jid = ? -- Positional parameter 1
         `;
 
