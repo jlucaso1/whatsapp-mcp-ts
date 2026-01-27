@@ -3,6 +3,10 @@
   "version": "1.0.0",
   "main": "src/main.ts",
   "type": "module",
+  "scripts": {
+    "start": "tsx src/main.ts",
+    "dev": "tsx src/main.ts"
+  },
   "keywords": [],
   "author": "jlucaso",
   "license": "ISC",
@@ -17,6 +21,7 @@
   "devDependencies": {
     "@types/node": "^22.13.14",
     "@types/pino": "^7.0.5",
+    "tsx": "^4.20.5",
     "typescript": "^5.8.2"
   },
   "engines": {

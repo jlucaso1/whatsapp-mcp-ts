@@ -1,9 +1,10 @@
 {
   "mcpServers": {
     "whatsapp": {
-      "command": "node",
+      "command": "npx",
       "args": [
-        "src/main.ts"
+        "tsx",
+        "{{PATH_TO_REPO}}/src/main.ts"
       ],
       "timeout": 15,
       "alwaysAllow": [],

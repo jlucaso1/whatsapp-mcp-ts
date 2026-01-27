@@ -85,7 +85,7 @@ npx -y @smithery/cli install @jlucaso1/whatsapp-mcp-ts --client claude
 
 ### Prerequisites
 
-* **Node.js:** Version 23.10.0 or higher (as specified in `package.json`). You can check your version with `node -v`. (Has initial typescript and sqlite builtin support)
+* **Node.js:** Version 23.10.0 or higher is recommended (has built-in TypeScript and SQLite support). However, the project also works with Node.js 18+ by using the included `tsx` dependency for TypeScript execution. You can check your version with `node -v`.
 * **npm** (or yarn/pnpm): Usually comes with Node.js.
 * **AI Client:** Anthropic Claude Desktop app, Cursor, Cline or Roo Code (or another MCP-compatible client).
 
@@ -104,9 +104,14 @@ npx -y @smithery/cli install @jlucaso1/whatsapp-mcp-ts --client claude
     ```
 
 3.  **Run the server for the first time:**
-    Use `node` to run the main script directly.
+    For Node.js 23.10.0+, you can run directly:
     ```bash
     node src/main.ts
+    ```
+
+    For older Node.js versions (18+), use the npm script:
+    ```bash
+    npm start
     ```
     * The first time you run it, it will likely generate a QR code link using `quickchart.io` and attempt to open it in your default browser.
     * Scan this QR code using your WhatsApp mobile app (Settings > Linked Devices > Link a Device).
@@ -125,8 +130,9 @@ You need to tell your AI client how to start this MCP server.
     {
       "mcpServers": {
         "whatsapp": {
-          "command": "node",
+          "command": "npx",
           "args": [
+            "tsx",
             "{{PATH_TO_REPO}}/src/main.ts"
           ],
           "timeout": 15, // Optional: Adjust startup timeout if needed
@@ -135,6 +141,8 @@ You need to tell your AI client how to start this MCP server.
       }
     }
     ```
+
+    **Note:** This configuration uses `npx tsx` which works with all Node.js versions 18+. If you're using Node.js 23.10.0+, you can alternatively use `"command": "node"` directly.
     * **Get the absolute path:** Navigate to the `whatsapp-mcp-ts` directory in your terminal and run `pwd`. Use this output for `{{PATH_TO_REPO}}`.
 
 2.  **Save the configuration file:**
