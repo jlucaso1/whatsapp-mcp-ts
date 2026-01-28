@@ -1,7 +1,9 @@
 import { pino } from "pino";
-import { initializeDatabase } from "./database.ts";
-import { startWhatsAppConnection, type WhatsAppSocket } from "./whatsapp.ts";
-import { startMcpServer } from "./mcp.ts";
+import { initializeDatabase } from "./database.js";
+import fs from "node:fs";
+import path from "node:path";
+import { startWhatsAppConnection, type WhatsAppSocket } from "./whatsapp.js";
+import { startMcpServer } from "./mcp.js";
 
 const dataDir = process.env.WHATSAPP_MCP_DATA_DIR || '.';
 const waLogger = pino(
@@ -20,6 +22,10 @@ const mcpLogger = pino(
   pino.destination(`${dataDir}/mcp-logs.txt`)
 );
 
+// SILENCE STDOUT/STDERR FOR MCP COMPATIBILITY
+// The MCP protocol uses stdio for communication. Any stray console.log/error will break the JSON stream.
+// Using Pino logger for database ensures we don't pollute stdout.
+
 async function main() {
   mcpLogger.info("Starting WhatsApp MCP Server...");
 
@@ -27,7 +33,7 @@ async function main() {
 
   try {
     mcpLogger.info("Initializing database...");
-    initializeDatabase();
+    initializeDatabase(mcpLogger);
     mcpLogger.info("Database initialized successfully.");
 
     mcpLogger.info("Attempting to connect to WhatsApp...");
