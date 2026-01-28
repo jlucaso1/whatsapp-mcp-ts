@@ -8,18 +8,19 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.8.0",
-    "@whiskeysockets/baileys": "^6.7.16",
-    "open": "^10.1.0",
-    "pino": "^9.6.0",
-    "zod": "^3.24.2"
+    "@modelcontextprotocol/sdk": "latest",
+    "@whiskeysockets/baileys": "latest",
+    "open": "latest",
+    "pino": "latest",
+    "zod": "latest"
   },
   "devDependencies": {
-    "@types/node": "^22.13.14",
-    "@types/pino": "^7.0.5",
-    "typescript": "^5.8.2"
+    "@types/node": "latest",
+    "@types/pino": "latest",
+    "ts-node": "^10.9.2",
+    "typescript": "latest"
   },
   "engines": {
-    "node": ">=23.10.0"
+    "node": ">=25.0.0"
   }
 }
