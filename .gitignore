@@ -1,24 +1,10 @@
-# Node dependencies
-node_modules/
-
-# Build output
-dist/
-
-# Logs
+node_modules
+dist
+.DS_Store
+auth_info/
+data/
 *.log
 wa-logs.txt
 mcp-logs.txt
-
-# Baileys authentication data (IMPORTANT!)
-auth_info/
-
-# SQLite Database (keep data local)
-data/
-
-# Environment variables
-.env
-
-# OS generated files
-.DS_Store
-Thumbs.db
-.roo
+console-capture.log
+contacts_cliente.txt
