@@ -19,7 +19,7 @@ import {
   storeChat,
   storeContact,
   type Message as DbMessage,
-} from "./database.ts";
+} from "./database.js";
 
 const AUTH_DIR = path.join(import.meta.dirname, "..", "auth_info");
 
@@ -42,11 +42,10 @@ function parseMessageForDb(msg: WAMessage): DbMessage | null {
   } else if (msg.message.videoMessage?.caption) {
     content = `[Video] ${msg.message.videoMessage.caption}`;
   } else if (msg.message.documentMessage?.caption) {
-    content = `[Document] ${
-      msg.message.documentMessage.caption ||
+    content = `[Document] ${msg.message.documentMessage.caption ||
       msg.message.documentMessage.fileName ||
       ""
-    }`;
+      }`;
   } else if (msg.message.audioMessage) {
     content = `[Audio]`;
   } else if (msg.message.stickerMessage) {
@@ -97,7 +96,6 @@ function parseMessageForDb(msg: WAMessage): DbMessage | null {
 export async function startWhatsAppConnection(
   logger: P.Logger
 ): Promise<WhatsAppSocket> {
-  initializeDatabase();
 
   const { state, saveCreds } = await useMultiFileAuthState(AUTH_DIR);
   const { version, isLatest } = await fetchLatestBaileysVersion();
@@ -131,8 +129,7 @@ export async function startWhatsAppConnection(
       if (connection === "close") {
         const statusCode = (lastDisconnect?.error as any)?.output?.statusCode;
         logger.warn(
-          `Connection closed. Reason: ${
-            DisconnectReason[statusCode as number] || "Unknown"
+          `Connection closed. Reason: ${DisconnectReason[statusCode as number] || "Unknown"
           }`,
           lastDisconnect?.error
         );
@@ -237,6 +234,38 @@ export async function startWhatsAppConnection(
           last_message_time: chatUpdate.conversationTimestamp
             ? new Date(Number(chatUpdate.conversationTimestamp) * 1000)
             : undefined,
+        });
+      }
+    }
+
+    if (events["contacts.upsert"]) {
+      const contacts = events["contacts.upsert"];
+      logger.info(
+        { count: contacts.length },
+        "Received contacts.upsert event"
+      );
+      for (const contact of contacts) {
+        storeContact({
+          jid: contact.id,
+          name: contact.name ?? null,
+          notify: contact.notify ?? null,
+        });
+      }
+    }
+
+    if (events["contacts.update"]) {
+      const updates = events["contacts.update"];
+      logger.info(
+        { count: updates.length },
+        "Received contacts.update event"
+      );
+      for (const update of updates) {
+        if (update.imgUrl) continue; // Skip updates that are just profile pic changes if we don't store them
+
+        storeContact({
+          jid: update.id!,
+          name: update.name ?? null,
+          notify: update.notify ?? null,
         });
       }
     }
