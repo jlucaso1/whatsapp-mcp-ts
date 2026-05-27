@@ -114,6 +114,20 @@ export async function startWhatsAppConnection(
     shouldIgnoreJid: (jid) => isJidGroup(jid),
   });
 
+  let resolveConnection: (() => void) | null = null;
+  let rejectConnection: ((err: Error) => void) | null = null;
+
+  const connectionReady = new Promise<void>((resolve, reject) => {
+    resolveConnection = resolve;
+    rejectConnection = reject;
+  });
+
+  const connectionTimeout = setTimeout(() => {
+    rejectConnection?.(new Error("WA connection timeout after 20s"));
+    rejectConnection = null;
+    resolveConnection = null;
+  }, 20000);
+
   sock.ev.process(async (events) => {
     if (events["connection.update"]) {
       const update = events["connection.update"];
@@ -140,6 +154,10 @@ export async function startWhatsAppConnection(
           logger.info("Reconnecting...");
           startWhatsAppConnection(logger);
         } else {
+          clearTimeout(connectionTimeout);
+          rejectConnection?.(new Error("Logged out"));
+          rejectConnection = null;
+          resolveConnection = null;
           logger.error(
             "Connection closed: Logged Out. Please delete auth_info and restart."
           );
@@ -147,7 +165,9 @@ export async function startWhatsAppConnection(
         }
       } else if (connection === "open") {
         logger.info(`Connection opened. WA user: ${sock.user?.name}`);
-        // console.log("Logged as", sock.user?.name);
+        clearTimeout(connectionTimeout);
+        resolveConnection?.();
+        resolveConnection = null;
       }
     }
 
@@ -242,6 +262,7 @@ export async function startWhatsAppConnection(
     }
   });
 
+  await connectionReady;
   return sock;
 }
 
