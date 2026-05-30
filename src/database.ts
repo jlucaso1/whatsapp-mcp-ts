@@ -105,7 +105,7 @@ export function storeChat(chat: Partial<Chat> & { jid: string }): void {
           ? chat.last_message_time.toISOString()
           : chat.last_message_time === null
             ? null
-            : String(chat.last_message_time),
+            : null,
     });
   } catch (error) {
     console.error("Error storing chat:", error);
