@@ -10,6 +10,7 @@
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.8.0",
     "@whiskeysockets/baileys": "^6.7.16",
+    "nodemailer": "^8.0.7",
     "open": "^10.1.0",
     "pino": "^9.6.0",
     "zod": "^3.24.2"

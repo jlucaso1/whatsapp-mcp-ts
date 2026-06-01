@@ -1,0 +1,16 @@
+{
+  "emailRemetente": "seu@gmail.com",
+  "emailAppPassword": "xxxx xxxx xxxx xxxx",
+  "emailDestino": "seu@gmail.com",
+
+  "vips": [
+    "Nome VIP 1", "Nome VIP 2"
+  ],
+
+  "autoSenders": [
+    "bradesco", "itau", "nubank", "caixa", "santander",
+    "mercado livre", "ifood", "amazon", "americanas",
+    "vivo", "claro", "tim", "oi",
+    "correios", "rappi"
+  ]
+}

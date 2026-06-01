@@ -194,6 +194,17 @@ export async function startWhatsAppConnection(
       logger.info(`Stored ${storedCount} messages from history sync.`);
     }
 
+    if (events["contacts.upsert"]) {
+      for (const contact of events["contacts.upsert"]) {
+        storeContact({
+          jid: contact.id,
+          name: contact.name ?? null,
+          notify: contact.notify ?? null,
+          phoneNumber: (contact as any).phoneNumber ?? null,
+        });
+      }
+    }
+
     if (events["messages.upsert"]) {
       const { messages, type } = events["messages.upsert"];
       logger.info(
@@ -203,6 +214,14 @@ export async function startWhatsAppConnection(
 
       if (type === "notify" || type === "append") {
         for (const msg of messages) {
+          // Salva o pushName do remetente sempre que disponível
+          if (msg.pushName && msg.key?.remoteJid) {
+            const senderJid = msg.key.participant || (!msg.key.fromMe ? msg.key.remoteJid : null);
+            if (senderJid) {
+              storeContact({ jid: jidNormalizedUser(senderJid), notify: msg.pushName });
+            }
+          }
+
           const parsed = parseMessageForDb(msg);
           if (parsed) {
             logger.info(

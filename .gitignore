@@ -18,6 +18,15 @@ data/
 # Environment variables
 .env
 
+# Triagem — config com credenciais e arquivos de estado
+triagem-config.json
+triagem-ultimo-envio.txt
+triagem-log.txt
+
+# Scripts de debug temporários
+check-*.mjs
+query*.mjs
+
 # OS generated files
 .DS_Store
 Thumbs.db
