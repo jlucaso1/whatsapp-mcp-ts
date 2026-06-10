@@ -94,6 +94,14 @@ function parseMessageForDb(msg: WAMessage): DbMessage | null {
   };
 }
 
+/**
+ * Open a self-healing WhatsApp connection.
+ *
+ * Returns a stable handle (a Proxy) that always delegates to the live socket: on
+ * a non-logout disconnect the underlying socket is torn down and transparently
+ * re-established with exponential backoff, so callers may hold the returned value
+ * for the process lifetime without ever referencing a dead socket.
+ */
 export async function startWhatsAppConnection(
   logger: P.Logger
 ): Promise<WhatsAppSocket> {
@@ -103,18 +111,67 @@ export async function startWhatsAppConnection(
   const { version, isLatest } = await fetchLatestBaileysVersion();
   logger.info(`Using WA v${version.join(".")}, isLatest: ${isLatest}`);
 
-  const sock = makeWASocket({
-    version,
-    logger,
-    auth: {
-      creds: state.creds,
-      keys: makeCacheableSignalKeyStore(state.keys, logger),
-    },
-    generateHighQualityLinkPreview: true,
-    shouldIgnoreJid: (jid) => isJidGroup(jid),
-  });
+  // One logical connection that transparently re-establishes itself.
+  //
+  // `currentSock` always points at the live socket; the Proxy returned at the end
+  // forwards to it, so callers never end up holding a stale, disconnected socket
+  // after a reconnect.
+  //
+  // Reconnects are guarded with a single-flight lock, exponential backoff and an
+  // explicit teardown of the dying socket. Previously every "close" recursively
+  // called startWhatsAppConnection() again without ending the old socket or
+  // detaching its `ev.process` handler, so a WhatsApp-side disconnect storm
+  // (thousands of `timedOut` closes per minute) accumulated orphaned sockets --
+  // each with its own WebSocket, keep-alive timer and signal-key cache -- leaking
+  // memory until the process grew to multiple GB.
+  let currentSock: WhatsAppSocket | null = null;
+  let detach: (() => void) | null = null;
+  let reconnecting = false;
+  let attempts = 0;
+  const BASE_DELAY_MS = 1_000;
+  const MAX_DELAY_MS = 30_000;
 
-  sock.ev.process(async (events) => {
+  const teardown = (dead: WhatsAppSocket) => {
+    // Stop exposing the dying socket through the proxy until we reconnect.
+    if (currentSock === dead) {
+      currentSock = null;
+    }
+    try {
+      detach?.();
+    } catch {}
+    detach = null;
+    try {
+      dead.end(undefined);
+    } catch {}
+  };
+
+  const scheduleReconnect = (dead: WhatsAppSocket) => {
+    if (reconnecting) return; // single-flight: ignore duplicate close events
+    reconnecting = true;
+    teardown(dead);
+    const delay = Math.min(MAX_DELAY_MS, BASE_DELAY_MS * 2 ** attempts);
+    attempts++;
+    logger.info(`Reconnecting in ${delay}ms (attempt ${attempts})`);
+    setTimeout(() => {
+      reconnecting = false;
+      connect();
+    }, delay);
+  };
+
+  const connect = () => {
+    const sock = makeWASocket({
+      version,
+      logger,
+      auth: {
+        creds: state.creds,
+        keys: makeCacheableSignalKeyStore(state.keys, logger),
+      },
+      generateHighQualityLinkPreview: true,
+      shouldIgnoreJid: (jid) => isJidGroup(jid),
+    });
+    currentSock = sock;
+
+    detach = sock.ev.process(async (events) => {
     if (events["connection.update"]) {
       const update = events["connection.update"];
       const { connection, lastDisconnect, qr } = update;
@@ -137,8 +194,7 @@ export async function startWhatsAppConnection(
           lastDisconnect?.error
         );
         if (statusCode !== DisconnectReason.loggedOut) {
-          logger.info("Reconnecting...");
-          startWhatsAppConnection(logger);
+          scheduleReconnect(sock);
         } else {
           logger.error(
             "Connection closed: Logged Out. Please delete auth_info and restart."
@@ -146,8 +202,8 @@ export async function startWhatsAppConnection(
           process.exit(1);
         }
       } else if (connection === "open") {
+        attempts = 0; // reset backoff once we're actually connected
         logger.info(`Connection opened. WA user: ${sock.user?.name}`);
-        // console.log("Logged as", sock.user?.name);
       }
     }
 
@@ -240,9 +296,28 @@ export async function startWhatsAppConnection(
         });
       }
     }
+    });
+  };
+
+  connect();
+
+  // Stable handle: always delegates to the live socket, so a reconnect swaps the
+  // underlying socket transparently without invalidating references the caller
+  // captured at startup.
+  const handle = new Proxy({} as WhatsAppSocket, {
+    get(_target, prop) {
+      if (!currentSock) return undefined;
+      const value = (currentSock as any)[prop];
+      return typeof value === "function" ? value.bind(currentSock) : value;
+    },
+    set(_target, prop, value) {
+      if (!currentSock) return true;
+      (currentSock as any)[prop] = value;
+      return true;
+    },
   });
 
-  return sock;
+  return handle;
 }
 
 export async function sendWhatsAppMessage(
