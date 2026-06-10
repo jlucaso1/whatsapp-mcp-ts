@@ -94,6 +94,14 @@ function parseMessageForDb(msg: WAMessage): DbMessage | null {
   };
 }
 
+/**
+ * Open a self-healing WhatsApp connection.
+ *
+ * Returns a stable handle (a Proxy) that always delegates to the live socket: on
+ * a non-logout disconnect the underlying socket is torn down and transparently
+ * re-established with exponential backoff, so callers may hold the returned value
+ * for the process lifetime without ever referencing a dead socket.
+ */
 export async function startWhatsAppConnection(
   logger: P.Logger
 ): Promise<WhatsAppSocket> {
@@ -116,7 +124,7 @@ export async function startWhatsAppConnection(
   // (thousands of `timedOut` closes per minute) accumulated orphaned sockets --
   // each with its own WebSocket, keep-alive timer and signal-key cache -- leaking
   // memory until the process grew to multiple GB.
-  let currentSock: WhatsAppSocket = null as any;
+  let currentSock: WhatsAppSocket | null = null;
   let detach: (() => void) | null = null;
   let reconnecting = false;
   let attempts = 0;
@@ -124,6 +132,10 @@ export async function startWhatsAppConnection(
   const MAX_DELAY_MS = 30_000;
 
   const teardown = (dead: WhatsAppSocket) => {
+    // Stop exposing the dying socket through the proxy until we reconnect.
+    if (currentSock === dead) {
+      currentSock = null;
+    }
     try {
       detach?.();
     } catch {}
@@ -294,10 +306,12 @@ export async function startWhatsAppConnection(
   // captured at startup.
   const handle = new Proxy({} as WhatsAppSocket, {
     get(_target, prop) {
+      if (!currentSock) return undefined;
       const value = (currentSock as any)[prop];
       return typeof value === "function" ? value.bind(currentSock) : value;
     },
     set(_target, prop, value) {
+      if (!currentSock) return true;
       (currentSock as any)[prop] = value;
       return true;
     },
